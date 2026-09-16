@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Database
+database.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads (private user files)
+uploads/reports/*
+uploads/skin/*
+!uploads/reports/.gitkeep
+!uploads/skin/.gitkeep
+
+# Environment
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Test artifacts
+htmlcov/
+.coverage
+.pytest_cache/
+
+# Logs
+*.log

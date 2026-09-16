@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+
+{% if has_analysis and analysis %}
+  <section class="dashboard-hero">
+    <div>
+      <span class="eyebrow"><i class="fa-solid fa-sparkles"></i> Personal wellness workspace</span>
+      <h1>Welcome back, {{ patient.name }}</h1>
+      <p>Your {{ data.report_type if data and data.report_type else 'uploaded' }} report has been organized into clear, educational next steps. Nothing here is a diagnosis or clinical risk prediction.</p>
+    </div>
+    <a href="{{ url_for('upload_report') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Analyze another report</a>
+  </section>
+
+  <section class="smart-grid">
+    <div class="glass-card summary-card">
+      <div class="card-heading"><span class="feature-icon teal"><i class="fa-solid fa-wand-magic-sparkles"></i></span><div><span class="card-kicker">AI Health Insights</span><h2>What your report says</h2></div></div>
+      <p>{{ intelligence.summary }}</p>
+      <div class="summary-meta"><span><strong>{{ data.report_type if data and data.report_type else 'Other' }}</strong> detected type</span><span><strong>{{ analysis|length }}</strong> values detected</span><span><strong>{{ analysis|selectattr('status', 'equalto', 'NORMAL')|list|length }}</strong> within range</span><span><strong>{{ analysis|selectattr('status', 'in', ['HIGH','LOW'])|list|length }}</strong> need review</span><span><strong>{{ analysis|selectattr('status', 'equalto', 'BORDERLINE')|list|length }}</strong> need monitoring</span></div>
+      <div class="result-actions"><button type="button" class="btn btn-primary btn-sm" data-talk-report><i class="fa-solid fa-comment-medical"></i> Explain Simply</button><button type="button" class="btn btn-outline btn-sm" data-copy-questions><i class="fa-solid fa-user-doctor"></i> Doctor Questions</button><a href="#resultsTable" class="btn btn-outline btn-sm"><i class="fa-solid fa-table-list"></i> View Full Analysis</a></div>
+    </div>
+  </section>
+
+  <section class="section report-tools">
+    <div class="report-processing-card">
+      <div class="card-heading"><span class="feature-icon blue"><i class="fa-solid fa-file-circle-check"></i></span><div><span class="card-kicker">Report Processing</span><h2>Extraction review</h2></div></div>
+      <div class="processing-steps"><span><i class="fa-solid fa-check"></i> Text extracted</span><span><i class="fa-solid fa-check"></i> Lab values detected</span><span><i class="fa-solid fa-check"></i> Reference ranges checked</span></div>
+      {% if extraction_confidence is not none %}<p class="confidence-line"><strong>Estimated extraction confidence: {{ extraction_confidence }}%</strong> <span>{{ extraction_note }}</span></p>{% endif %}
+      <p class="processing-note">This is an application estimate, not a scientifically validated confidence score. Verify displayed values against your original report before discussing them.</p>
+    </div>
+    <div class="report-talk-card">
+      <div class="feature-icon teal"><i class="fa-solid fa-comments"></i></div><h2>Talk to my report</h2><p>Ask Dia will use the currently analyzed values and will not invent missing information.</p><button type="button" class="btn btn-primary" data-talk-report><i class="fa-solid fa-comment-medical"></i> Talk to My Report</button><button type="button" class="btn btn-outline mt-2" data-speak-report><i class="fa-solid fa-volume-high"></i> Listen to My Report</button>
+    </div>
+  </section>
+
+  <section class="section compact-section">
+    <div class="section-head"><h2>Important observations</h2><p>These are derived from the statuses and reference ranges available in your uploaded report.</p></div>
+    <div class="priority-grid">
+      {% for group_name, group_items in intelligence.groups.items() %}
+      <div class="priority-card priority-{{ loop.index }}">
+        <div class="priority-title"><span>{{ group_name }}</span><strong>{{ group_items|length }}</strong></div>
+        {% if group_items %}{% for item in group_items %}<div class="priority-item"><span>{{ item.test }}</span><strong>{{ item.value }} {{ item.unit }}</strong></div>{% endfor %}{% else %}<p class="muted">No results in this group.</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Information Detected</h2><p>Only values actually found in the uploaded report are shown as detected.</p></div>
+    <div class="detected-list">
+      {% set detected_keys = analysis|map(attribute='key')|list %}
+      {% for key, label in [('glucose','Glucose'),('hba1c','HbA1c'),('total cholesterol','Total Cholesterol'),('hdl','HDL'),('ldl','LDL'),('triglycerides','Triglycerides'),('hemoglobin','Hemoglobin'),('vitamin d','Vitamin D'),('tsh','TSH'),('creatinine','Creatinine'),('alt','ALT'),('ast','AST'),('blood pressure','Blood Pressure')] %}
+      <span class="detected-pill {{ 'found' if key in detected_keys else 'missing' }}"><i class="fa-solid {{ 'fa-check' if key in detected_keys else 'fa-minus' }}"></i>{{ label }}</span>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>✨ Dia Insights</h2><p>Practical context based only on the values detected in this report.</p></div>
+    <div class="insight-grid">
+      <div class="insight-card"><h3><i class="fa-solid fa-bell"></i> Most important findings</h3><ul>{% for item in intelligence.insights.important %}<li>{{ item }}</li>{% endfor %}</ul></div>
+      <div class="insight-card"><h3><i class="fa-solid fa-circle-check"></i> Positive findings</h3><ul>{% for item in intelligence.insights.positive %}<li>{{ item }}</li>{% endfor %}</ul></div>
+      <div class="insight-card"><h3><i class="fa-solid fa-route"></i> Suggested next steps</h3><ul>{% for item in intelligence.insights.next_steps %}<li>{{ item }}</li>{% endfor %}</ul></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>✨ What Changed?</h2><p>Mathematical comparison with the previous locally stored report. A change is not proof of improvement or deterioration.</p></div>
+    <div class="change-grid">{% for change in changes %}<div class="change-card"><h3>{{ change.test }}</h3><div><span>Previous</span><strong>{{ change.previous if change.previous is not none else 'Not available' }} {{ change.unit }}</strong></div><div><span>Current</span><strong>{{ change.current if change.current is not none else 'Not available' }} {{ change.unit }}</strong></div><div class="change-direction">{% if change.direction == 'Decreasing' %}↓{% elif change.direction == 'Increasing' %}↑{% elif change.direction == 'Stable' %}→{% endif %} {{ change.direction }}{% if change.delta is not none %} · {{ '%+.2f'|format(change.delta) }} {{ change.unit }}{% endif %}</div></div>{% else %}<div class="empty-hint">Analyze another report to compare measured values.</div>{% endfor %}</div>
+  </section>
+
+  <!-- Patient overview card -->
+  <section class="overview-grid">
+    <div class="glass-card patient-card">
+      <h3><i class="fa-solid fa-user"></i> Patient Overview</h3>
+      <div class="patient-rows">
+        <div><span>Name</span><strong>{{ patient.name }}</strong></div>
+        <div><span>Age</span><strong>{{ patient.age if patient.age is not none else 'Unknown' }}</strong></div>
+        <div><span>Sex</span><strong>{{ patient.sex }}</strong></div>
+        <div><span>Report date</span><strong>{{ patient.date }}</strong></div>
+      </div>
+    </div>
+
+    <div class="glass-card stat-strip">
+      <div class="stat-box"><strong>{{ analysis|length }}</strong><span>Tests detected</span></div>
+      <div class="stat-box red"><strong>{{ analysis|selectattr('status', 'in', ['HIGH','LOW'])|list|length }}</strong><span>Abnormal</span></div>
+      <div class="stat-box yellow"><strong>{{ analysis|selectattr('status', 'equalto', 'BORDERLINE')|list|length }}</strong><span>Borderline</span></div>
+      <div class="stat-box green"><strong>{{ analysis|selectattr('status', 'equalto', 'NORMAL')|list|length }}</strong><span>Normal</span></div>
+    </div>
+
+    <div class="glass-card action-card">
+      <h3>Actions</h3>
+      <a href="{{ url_for('download_report') }}" class="btn btn-secondary w-100 action-btn">
+        <i class="fa-solid fa-file-pdf"></i> Download PDF Report
+      </a>
+      <a href="{{ url_for('diet') }}" class="btn btn-outline w-100 mt-2">
+        <i class="fa-solid fa-utensils"></i> Create Diet Plan
+      </a>
+    </div>
+  </section>
+
+  <!-- Key findings -->
+  <section class="section">
+    <h2 class="section-title">Key Findings</h2>
+    <div class="finding-banner" id="keyFindings"></div>
+  </section>
+
+  <!-- Abnormal results (prominent) -->
+  <section class="section" id="abnormalSection">
+    <h2 class="section-title red-title"><i class="fa-solid fa-triangle-exclamation"></i> Abnormal Results</h2>
+    <div class="abnormal-grid" id="abnormalGrid"></div>
+    <div class="empty-hint" id="noAbnormalHint" style="display:none">
+      <i class="fa-solid fa-circle-check"></i> No abnormal values detected — all results within their reference ranges.
+    </div>
+  </section>
+
+  <!-- All test results -->
+  <section class="section">
+    <h2 class="section-title">All Test Results</h2>
+    <div class="table-wrap">
+      <table class="data-table" id="resultsTable">
+        <thead>
+          <tr>
+            <th>Test</th><th>Value</th><th>Ref. Range</th><th>Status</th><th>Explanation</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Charts -->
+  <section class="section">
+    <h2 class="section-title">Health Trends</h2>
+    <div class="trend-grid" id="trendGrid"></div>
+    <div class="empty-hint" id="noTrendsHint" style="display:none">Analyze another report to compare values over time.</div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">Health Charts</h2>
+    <div class="chart-grid" id="chartGrid"></div>
+    <div class="empty-hint" id="noChartsHint" style="display:none">No numeric values available to chart.</div>
+  </section>
+
+  <!-- Guidance -->
+  <section class="section">
+    <h2 class="section-title">Lifestyle Recommendations &amp; Diet Guidance</h2>
+    <div class="guidance-card" id="lifestyleGuidance"></div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">Health Timeline</h2>
+    <div class="timeline">{% for event in timeline %}<div class="timeline-item"><span class="timeline-dot"></span><div><strong>{{ event.label }}</strong><small>{{ event.created_at|replace('T', ' ') }}</small>{% if event.detail %}<p>{{ event.detail }}</p>{% endif %}</div></div>{% else %}<div class="empty-hint">Your local activity timeline will appear here.</div>{% endfor %}</div>
+  </section>
+
+  <!-- Questions for doctor + disclaimer -->
+  <section class="section">
+    <div class="info-duo">
+      <div class="info-card">
+        <div class="feature-icon pink"><i class="fa-solid fa-user-doctor"></i></div>
+        <h3>Questions for your doctor</h3>
+        <ul class="doctor-q" id="doctorQuestions">{% for question in intelligence.questions %}<li>{{ question }}</li>{% else %}<li>No questions generated because no abnormal findings were detected.</li>{% endfor %}</ul>
+        <button class="btn btn-outline btn-sm" type="button" data-copy-questions><i class="fa-solid fa-clipboard"></i> Copy questions</button>
+      </div>
+      <div class="info-card warn">
+        <div class="feature-icon gold"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h3>Safety disclaimer</h3>
+        <p>Dia Assist is educational only and does not provide medical diagnosis. All values and insights are extracted from the uploaded report; anything missing is left unknown. Discuss everything with your healthcare professional.</p>
+      </div>
+    </div>
+  </section>
+
+  <textarea id="analysisData" class="hidden" style="display:none">{{ analysis|tojson }}</textarea>
+  <textarea id="patientData" class="hidden" style="display:none">{{ patient|tojson }}</textarea>
+{% else %}
+  <section class="section">
+    <div class="empty-state">
+      <i class="fa-solid fa-folder-open"></i>
+      <h2>No analysis yet</h2>
+      <p>Upload a medical report to see your personalized analysis dashboard.</p>
+      <a href="{{ url_for('upload_report') }}" class="btn btn-primary"><i class="fa-solid fa-file-medical"></i> Upload a Report</a>
+    </div>
+  </section>
+{% endif %}
+
+<!-- Recent files (always visible) -->
+<section class="section">
+  <h2 class="section-title">Recent Reports</h2>
+  {% if recent_files %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>File</th><th>Uploaded</th><th>Tests</th><th>Flags</th></tr></thead>
+        <tbody>
+          {% for f in recent_files %}
+          <tr>
+            <td><i class="fa-solid fa-file-lines"></i> {{ f.filename }}</td>
+            <td>{{ f.uploaded_at }}</td>
+            <td>{{ f.tests }}</td>
+            <td>
+              <span class="badge {{ 'badge-red' if f.abn > 0 else 'badge-green' }}">
+                {{ f.abn }} flagged
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-hint"><i class="fa-solid fa-file-circle-question"></i> No reports uploaded yet.</div>
+  {% endif %}
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.__ANALYSIS__ = (function(){
+    const el = document.getElementById('analysisData');
+    if (!el) return null;
+    try { return JSON.parse(el.value); } catch(e){ return null; }
+  })();
+  window.__PATIENT__ = (function(){
+    const el = document.getElementById('patientData');
+    if (!el) return null;
+    try { return JSON.parse(el.value); } catch(e){ return null; }
+  })();
+  window.__TRENDS__ = {{ trends|tojson }};
+  window.dispatchEvent(new Event('dia-dashboard-ready'));
+  setTimeout(() => { if (window.__DIA_RENDER_DASHBOARD__) window.__DIA_RENDER_DASHBOARD__(); }, 0);
+  const dashboardRenderTimer = setInterval(() => { if (window.__ANALYSIS__ && window.__DIA_RENDER_DASHBOARD__) { window.__DIA_RENDER_DASHBOARD__(); clearInterval(dashboardRenderTimer); } }, 25);
+</script>
+{% endblock %}

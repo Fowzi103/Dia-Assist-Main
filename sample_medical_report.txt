@@ -1,0 +1,47 @@
+=================================================================
+ DEMO / TEST DATA — NOT A REAL PATIENT
+ This file is for application testing ONLY.
+=================================================================
+
+Patient Name: Demo Patient
+Age: 35
+Sex: Female
+Report Date: 15 September 2026
+
+Fasting Glucose: 128 mg/dL
+Reference Range: 70 - 99 mg/dL
+
+HbA1c: 6.8 %
+Reference Range: 4.0 - 5.6 %
+
+Total Cholesterol: 215 mg/dL
+Reference Range: < 200 mg/dL
+
+HDL: 48 mg/dL
+Reference Range: > 40 mg/dL
+
+LDL: 142 mg/dL
+Reference Range: < 100 mg/dL
+
+Triglycerides: 160 mg/dL
+Reference Range: < 150 mg/dL
+
+Hemoglobin: 13.2 g/dL
+Reference Range: 12 - 16 g/dL
+
+Vitamin D: 18 ng/mL
+Reference Range: 30 - 100 ng/mL
+
+TSH: 3.1 mIU/L
+Reference Range: 0.4 - 4.0 mIU/L
+
+Creatinine: 0.9 mg/dL
+Reference Range: 0.6 - 1.1 mg/dL
+
+ALT: 28 U/L
+Reference Range: 7 - 35 U/L
+
+AST: 25 U/L
+Reference Range: 8 - 33 U/L
+
+Blood Pressure: 138/88 mmHg

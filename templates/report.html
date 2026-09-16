@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Medical Reports{% endblock %}
+{% block page_title %}Medical Report Analyzer{% endblock %}
+{% block content %}
+
+<section class="section">
+  <div class="section-head">
+    <h2>Upload a medical report</h2>
+    <p>Supported: PDF · TXT · DOC · DOCX · JPG · JPEG · PNG &nbsp;(max 10 MB)</p>
+  </div>
+
+  <div class="upload-card">
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept=".pdf,.txt,.doc,.docx,.jpg,.jpeg,.png" hidden>
+      <div class="dz-inner">
+        <div class="dz-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+        <p class="dz-title">Drag &amp; drop your report here</p>
+        <p class="dz-sub">or <span class="dz-link">browse files</span> from your computer</p>
+        <div class="dz-preview" id="dzPreview" style="display:none">
+          <div class="preview-file">
+            <i class="fa-solid fa-file-medical"></i>
+            <div>
+              <strong id="previewName"></strong>
+              <span id="previewSize"></span>
+            </div>
+            <i class="fa-solid fa-xmark preview-remove" id="previewRemove"></i>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="uploadProgress"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('analyze_report') }}" enctype="multipart/form-data" id="uploadForm">
+      <input type="file" name="report" id="fileInputHidden" accept=".pdf,.txt,.doc,.docx,.jpg,.jpeg,.png" style="display:none">
+      <div class="form-note">
+        <i class="fa-solid fa-circle-info"></i>
+        Only values actually present in the report are processed. Missing information stays unknown.
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg w-100" id="analyzeBtn" disabled>
+        <i class="fa-solid fa-magnifying-glass-chart"></i> Analyze Report
+      </button>
+    </form>
+  </div>
+</section>
+
+<section class="section">
+  <div class="info-duo">
+    <div class="info-card">
+      <div class="feature-icon teal"><i class="fa-solid fa-flask-vial"></i></div>
+      <h3>What we detect</h3>
+      <p>Glucose, HbA1c, cholesterol panel (TC/HDL/LDL/TG), hemoglobin, Vitamin D, TSH, creatinine, ALT/AST, blood pressure + patient name, age, sex &amp; date.</p>
+    </div>
+    <div class="info-card">
+      <div class="feature-icon blue"><i class="fa-solid fa-lock"></i></div>
+      <h3>How it stays private</h3>
+      <p>Files are stored locally in a private folder that is never served publicly. Analysis happens fully on your machine. Delete everything anytime.</p>
+    </div>
+    <div class="info-card quick">
+      <div class="feature-icon gold"><i class="fa-solid fa-lightbulb"></i></div>
+      <h3>Quick test</h3>
+      <p>No report handy? Use the included <code>sample_medical_report.txt</code> (demo data) to try everything.</p>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

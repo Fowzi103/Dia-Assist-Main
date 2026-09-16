@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="{{ language }}" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Dia Assist — AI Health & Wellness Assistant. Analyze medical reports, plan diets, skin AI, and Ask Dia. Privacy-first, local, educational.">
+  <title>{% block title %}Dia Assist{% endblock %} · AI Health & Wellness Assistant</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="app-body {% if request.endpoint == 'index' %}landing-page{% endif %}">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-logo"><i class="fa-solid fa-heart-pulse"></i></span>
+      <div>
+        <span class="brand-name">Dia Assist</span>
+        <span class="brand-tag">AI Health &amp; Wellness</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+        <i class="fa-solid fa-house"></i><span data-i18n="home">{{ t('home') }}</span>
+      </a>
+      <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+        <i class="fa-solid fa-gauge-high"></i><span data-i18n="dashboard">{{ t('dashboard') }}</span>
+      </a>
+      <a href="{{ url_for('timeline_page') }}" class="nav-link {% if request.endpoint in ('trends', 'timeline_page') %}active{% endif %}">
+        <i class="fa-solid fa-chart-line"></i><span>Health Timeline</span>
+      </a>
+      <a href="{{ url_for('reports') }}" class="nav-link {% if request.endpoint in ('upload_report', 'reports') %}active{% endif %}">
+        <i class="fa-solid fa-file-medical"></i><span>My Reports</span>
+      </a>
+      <a href="{{ url_for('health_analysis') }}" class="nav-link {% if request.endpoint == 'health_analysis' %}active{% endif %}">
+        <i class="fa-solid fa-chart-simple"></i><span>Health Analysis</span>
+      </a>
+      <a href="{{ url_for('diet') }}" class="nav-link {% if request.endpoint == 'diet' %}active{% endif %}">
+        <i class="fa-solid fa-utensils"></i><span data-i18n="diet_planner">{{ t('diet_planner') }}</span>
+      </a>
+      <a href="{{ url_for('upload_skin') }}" class="nav-link {% if request.endpoint in ('upload_skin', 'analyze_skin') %}active{% endif %}">
+        <i class="fa-solid fa-face-smile"></i><span data-i18n="skin_ai">{{ t('skin_ai') }}</span>
+      </a>
+      <a href="{{ url_for('privacy') }}" class="nav-link {% if request.endpoint == 'privacy' %}active{% endif %}">
+        <i class="fa-solid fa-shield-halved"></i><span data-i18n="privacy_center">{{ t('privacy_center') }}</span>
+      </a>
+      <button class="nav-link chat-link" id="openChatFromSidebar" type="button">
+        <i class="fa-solid fa-comment-dots"></i><span data-i18n="ask_dia">{{ t('ask_dia') }}</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <form method="POST" action="{{ url_for('delete_data') }}" data-confirm="{{ t('delete_confirm') }}">
+        <button type="submit" class="btn btn-outline-danger w-100">
+          <i class="fa-solid fa-trash-can"></i> <span data-i18n="delete_all_data">{{ t('delete_all_data') }}</span>
+        </button>
+      </form>
+      <p class="sidebar-privacy"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="privacy_local">{{ t('privacy_local') }}</span></p>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Main wrapper -->
+  <div class="main">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="btn-icon sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <span class="topbar-title">{% block page_title %}Dia Assist{% endblock %}</span>
+      </div>
+      <div class="topbar-right">
+        <form class="language-switcher" method="POST" action="{{ url_for('set_language') }}">
+          <label for="languageSelect"><span aria-hidden="true">🌐</span> <span data-i18n="language">{{ t('language') }}</span></label>
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <select id="languageSelect" name="language" onchange="this.form.submit()" aria-label="{{ t('language') }}">
+            {% for code, label in languages.items() %}<option value="{{ code }}" {% if language == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </form>
+        <button class="btn-icon" id="darkToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <i class="fa-solid fa-moon" id="darkIcon"></i>
+        </button>
+        <button class="btn-icon mode-toggle" id="simpleModeToggle" type="button" title="Simple Mode" aria-label="Simple Mode"><i class="fa-solid fa-child-reaching"></i></button>
+        <button class="btn-icon mode-toggle" id="seniorModeToggle" type="button" title="Senior Mode" aria-label="Senior Mode"><i class="fa-solid fa-universal-access"></i></button>
+        <a href="{{ url_for('upload_report') }}" class="btn btn-primary btn-sm hide-mobile">
+          <i class="fa-solid fa-file-medical"></i> <span data-i18n="analyze_report">{{ t('analyze_report') }}</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Flash messages (toasts) -->
+    <div class="toast-container" id="toastContainer">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="toast toast-{{ category }} show">
+            <i class="fa-solid {% if category == 'error' %}fa-circle-exclamation{% elif category == 'success' %}fa-circle-check{% else %}fa-circle-info{% endif %}"></i>
+            <span>{{ message }}</span>
+            <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+          </div>
+        {% endfor %}
+      {% endwith %}
+    </div>
+
+    <!-- Page content -->
+    <main class="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <!-- Floating Ask Dia chatbot -->
+  <button class="chat-fab" id="chatFab" aria-label="Open Ask Dia chatbot">
+    <i class="fa-solid fa-comment-dots fab-icon"></i>
+    <i class="fa-solid fa-xmark fab-close"></i>
+    <span class="fab-pulse"></span>
+  </button>
+
+  <div class="chat-widget" id="chatWidget">
+    <div class="chat-header">
+      <div class="chat-avatar"><i class="fa-solid fa-heart-pulse"></i></div>
+      <div>
+        <strong data-i18n="ask_dia">{{ t('ask_dia') }}</strong>
+        <span class="chat-status"><span class="dot"></span> Online · uses your report</span>
+      </div>
+      <button class="btn-icon" id="chatClose"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="chat-body" id="chatBody">
+      <div class="chat-msg bot">
+        <div class="chat-bubble" data-i18n="chat_greeting">{{ t('chat_greeting') }}</div>
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <textarea id="chatInput" rows="1" data-i18n-placeholder="chat_placeholder" placeholder="{{ t('chat_placeholder') }}"></textarea>
+      <button class="btn-icon voice-button" id="voiceInputBtn" type="button" title="Start Speaking" aria-label="Start Speaking"><i class="fa-solid fa-microphone"></i></button>
+      <button class="btn btn-primary btn-send" id="chatSend"><i class="fa-solid fa-paper-plane"></i></button>
+    </div>
+    <div class="chat-voice-controls"><button type="button" id="voiceStopBtn"><i class="fa-solid fa-stop"></i> Stop</button><button type="button" id="voicePlayBtn"><i class="fa-solid fa-volume-high"></i> Listen</button><button type="button" id="voicePauseBtn"><i class="fa-solid fa-pause"></i> Stop Audio</button><span id="voiceStatus" role="status"></span></div>
+    <div class="chat-prompts" id="chatPrompts"></div>
+    <div class="chat-footer">Educational only · not medical advice</div>
+  </div>
+
+  <div class="page-loader" id="pageLoader">
+    <div class="spinner"></div>
+    <span data-i18n="analyzing">{{ t('analyzing') }}</span>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>window.__LANGUAGE__={{ language|tojson }};window.__I18N__={{ translations|tojson }};window.__I18N_EN__={{ english_translations|tojson }};</script>
+  <script src="{{ url_for('static', filename='js/app.js', v='20260916c') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
